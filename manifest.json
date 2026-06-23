@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Sleeper Draft Monitor",
+  "version": "1.0.0",
+  "description": "Displays Sleeper draft picks in real time.",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Sleeper Draft Monitor"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://sleeper.com/*", "https://sleeper.app/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "css": ["styles.css"]
+    }
+  ]
+}
