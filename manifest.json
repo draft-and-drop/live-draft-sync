@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Sleeper Draft Monitor",
   "version": "1.0.0",
-  "description": "Displays Sleeper draft picks in real time.",
+  "description": "Monitors and collects Sleeper draft picks in real time.",
   "permissions": ["storage"],
   "action": {
     "default_popup": "popup.html",
@@ -12,8 +12,14 @@
     {
       "matches": ["https://sleeper.com/*", "https://sleeper.app/*"],
       "js": ["content.js"],
-      "run_at": "document_idle",
-      "css": ["styles.css"]
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://127.0.0.1:5500/local-server/*"
+      ],
+      "js": ["site-bridge.js"],
+      "run_at": "document_start"
     }
   ]
 }
