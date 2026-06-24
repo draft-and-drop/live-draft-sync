@@ -16,7 +16,7 @@
     },
     {
       "matches": [
-        "http://127.0.0.1:5500/local-server/*"
+        "http://localhost:3000/*"
       ],
       "js": ["site-bridge.js"],
       "run_at": "document_start"
