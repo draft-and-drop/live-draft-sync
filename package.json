@@ -7,14 +7,15 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "id-map": "tsx scripts/create-fp-sleeper-map.ts"
   },
   "dependencies": {
     "node-html-parser": "^8.0.3",
     "nuxt": "^4.4.8",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
-},
+  },
   "devDependencies": {
     "@types/papaparse": "^5.5.2",
     "papaparse": "^5.5.4",
