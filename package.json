@@ -10,8 +10,16 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "node-html-parser": "^8.0.3",
     "nuxt": "^4.4.8",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
+},
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2",
+    "papaparse": "^5.5.4",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.5"
   }
 }
