@@ -8,7 +8,9 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "id-map": "tsx scripts/create-fp-sleeper-map.ts"
+    "s-map": "tsx scripts/create-fp-sleeper-map.ts",
+    "ds-map": "tsx scripts/create-ds-sleeper-map.ts",
+    "add-ds": "tsx scripts/add-draftsharks-mappings.ts"
   },
   "dependencies": {
     "node-html-parser": "^8.0.3",
