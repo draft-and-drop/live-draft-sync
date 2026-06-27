@@ -24,7 +24,11 @@ const html = await fetch(
 const draftSharksIds = new Map(
   parse(html)
     .querySelectorAll("tbody[data-player-row]")
-    .filter((element) => ["QB", "WR", "RB", "TE", "K", "DEF"].includes(element.getAttribute("data-fantasy-position") ?? ""))
+    .filter((element) =>
+      ["QB", "WR", "RB", "TE", "K", "DEF"].includes(
+        element.getAttribute("data-fantasy-position") ?? "",
+      ),
+    )
     .map((player) => [
       `${normalize(player.getAttribute("data-player-name"))}`,
       player.getAttribute("data-key")!,
@@ -36,8 +40,7 @@ const updated = csv.map((player) => {
     .filter(([column]) => column.endsWith("_name"))
     .map(([, name]) => name);
 
-    
-    const draftSharksId = names
+  const draftSharksId = names
     .map((name) => draftSharksIds.get(`${normalize(name)}`))
     .find(Boolean);
 
