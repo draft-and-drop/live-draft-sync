@@ -10,7 +10,9 @@
     "postinstall": "nuxt prepare",
     "s-map": "tsx scripts/create-fp-sleeper-map.ts",
     "ds-map": "tsx scripts/create-ds-sleeper-map.ts",
-    "add-ds": "tsx scripts/add-draftsharks-mappings.ts"
+    "dk-map": "tsx scripts/create-dk-sleeper-map.ts",
+    "add-ds": "tsx scripts/add-draftsharks-mappings.ts",
+    "add-dk": "tsx scripts/add-draftkings-mappings.ts"
   },
   "dependencies": {
     "node-html-parser": "^8.0.3",
