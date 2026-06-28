@@ -2,6 +2,7 @@ export interface DraftedPlayer {
   playerId: string;
   name: string;
   overallPick: number;
+  positionDetails: string;
 }
 
 export function useDraftBridge() {
