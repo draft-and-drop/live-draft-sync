@@ -11,7 +11,7 @@
   "content_scripts": [
     {
       "matches": ["https://sleeper.com/*", "https://sleeper.app/*"],
-      "js": ["content-test.js"],
+      "js": ["content.js", "content-test.js"],
       "run_at": "document_idle"
     },
     {

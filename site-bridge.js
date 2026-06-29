@@ -19,22 +19,20 @@ async function sendCurrentPicks() {
   const picks = result[STORAGE_KEY] ?? [];
   const teams = result[TEAMS] ?? [];
 
-  console.log("teams", teams)
+  // console.log("teams", teams)
 
   sendPicksToWebsite(picks, teams);
 }
 
 // Send updates whenever Sleeper tab has a storage update
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || !changes[STORAGE_KEY] || !changes[TEAMS]) {
+  if (areaName !== "local") {
     return;
   }
 
-  console.log("runtime storage changes")
-
   sendPicksToWebsite(
-    changes[STORAGE_KEY].newValue ?? [],
-    changes[TEAMS] ?? [],
+    changes[STORAGE_KEY]?.newValue ?? [],
+    changes[TEAMS]?.newValue ?? [],
   );
 });
 

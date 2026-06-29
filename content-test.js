@@ -1,6 +1,6 @@
 const TEAMS = "sleeperTeamPicks";
 
-let previousResult = "";
+let prevRes = "";
 
 function parsePlayerCell(cell) {
   console.assert(cell instanceof HTMLElement);
@@ -60,12 +60,12 @@ async function scanDraftBoard() {
   }
 
   const serialized = JSON.stringify(teamObjects);
-  if (serialized !== previousResult) {
+  if (serialized !== prevRes) {
     previousResult = serialized;
     await chrome.storage.local.set({
       [TEAMS]: teamObjects,
     });
-    console.log("[Sleeper Draft Monitor] Picks updated:", teamObjects);
+    console.log("[Sleeper Draft Monitor] Teams updated:", teamObjects);
   }
 }
 
