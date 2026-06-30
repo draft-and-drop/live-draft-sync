@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { teams, /* draftedPlayers*/ startBridge } = useDraftBridge();
+const { teams, draftedPlayers, startBridge } = useDraftBridge();
 const { data: fpRankings } = useFetch("/api/fantasypros");
 const { data: dsRankings } = useFetch("/api/draftsharks");
 const { data: dkRankings } = useFetch("/api/draftkings");
@@ -9,8 +9,7 @@ const { data: fantasyCalcRankings } = useFantasyCalc();
 let stopBridge: (() => void) | undefined;
 
 let draftedIds = computed(() => {
-  return new Set();
-  // return new Set(draftedPlayers.value.map((player) => player.playerId));
+  return new Set(draftedPlayers.value.map((player) => player.sleeper_id));
 });
 
 let availableFpPlayers = computed(() => {
@@ -27,6 +26,10 @@ let availableDkPlayers = computed(() => {
 
 let availableFgPlayers = computed(() => {
   return fgRankings.value?.filter((player) => isAvailable(player));
+});
+
+let availableFantasyCalcPlayers = computed(() => {
+  return fantasyCalcRankings.value?.filter((p) => !draftedIds.value.has(p.player.sleeperId));
 });
 
 function isAvailable(player: any): boolean {
@@ -127,7 +130,7 @@ onUnmounted(() => {
     <div>
       <div>Fantasy Calc</div>
       <ul>
-        <li v-for="(p, index) in fantasyCalcRankings" :key="p.player.sleeperId">
+        <li v-for="(p, index) in availableFantasyCalcPlayers" :key="p.player.sleeperId">
           <div style="padding: 0.2rem">
             <div>
               {{ index + 1 }}. ({{ p.player.sleeperId }})
