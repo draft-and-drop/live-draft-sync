@@ -13,7 +13,8 @@
     "dk-map": "tsx scripts/create-dk-sleeper-map.ts",
     "fg-map": "tsx scripts/create-fg-sleeper-map.ts",
     "add-ds": "tsx scripts/add-draftsharks-mappings.ts",
-    "add-dk": "tsx scripts/add-draftkings-mappings.ts"
+    "add-dk": "tsx scripts/add-draftkings-mappings.ts",
+    "update-csv": "npm run add-ds && npm run add-dk"
   },
   "dependencies": {
     "node-html-parser": "^8.0.3",
