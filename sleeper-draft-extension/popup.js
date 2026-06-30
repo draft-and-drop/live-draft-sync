@@ -20,7 +20,7 @@ function renderPicks(picks) {
     const title = document.createElement("div");
     title.className = "pick-number";
     title.textContent =
-      `${pick.displayedPick ?? pick.overallPick}: ` +
+      `${pick.displayed_pick ?? pick.displayed_pick}: ` +
       `${pick.name ?? "Unknown player"}`;
 
     const details = document.createElement("div");
@@ -28,7 +28,7 @@ function renderPicks(picks) {
 
     const playerId = document.createElement("div");
     playerId.className = "player-id";
-    playerId.textContent = `Sleeper ID: ${pick.playerId}`;
+    playerId.textContent = `Sleeper ID: ${pick.sleeper_id}`;
 
     row.append(title, details, playerId);
     picksElement.appendChild(row);

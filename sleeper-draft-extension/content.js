@@ -1,100 +1,104 @@
-const STORAGE_KEY = "sleeperDraftPicks";
+const PICKS_KEY = "sleeperDraftPicks";
+const TEAMS_KEY = "sleeperTeamPicks";
 
-let scanScheduled = false;
-let previousResult = "";
+let prevRes = "";
 
-function parseDraftCell(cell) {
-  if (!(cell instanceof HTMLElement)) {
-    return null;
-  }
+function parsePlayerCell(cell) {
+  console.assert(cell instanceof HTMLElement);
 
   const overallPickMatch = cell.id.match(/^draft-cell-(\d+)$/);
-
-  if (!overallPickMatch) {
-    return null;
-  }
-
+  console.assert(overallPickMatch);
   const avatar = cell.querySelector(".avatar-player");
-  const ariaLabel = avatar?.getAttribute("aria-label") ?? "";
 
-  // e.g., aria-label="nfl Player 9221"
-  const playerIdMatch = ariaLabel.match(/^nfl Player\s+(.+)$/i);
-  const playerId = playerIdMatch?.[1]?.trim();
+  const sleeper_id = avatar
+    ?.getAttribute("aria-label")
+    ?.match(/^nfl Player\s+(.+)$/i)[1]
+    ?.trim();
+  console.assert(sleeper_id);
 
-  if (!playerId) {
-    return null;
+  return {
+    sleeper_id,
+    overall_pick: Number(overallPickMatch[1]),
+    displayed_pick: cell.querySelector(".pick")?.textContent?.trim(),
+    name: cell.querySelector(".player-name")?.textContent?.trim(),
+    img_url: avatar.getAttribute("src"),
+    position_details: cell.querySelector(".position")?.textContent?.trim(),
+  };
+}
+
+function parseTeamColumn(teamCell) {
+  console.assert(teamCell instanceof HTMLElement);
+
+  const teamNameElement = teamCell.querySelector(
+    ".team-header-container .header-text",
+  );
+  console.assert(teamNameElement instanceof HTMLElement);
+
+  // collect the drafted players
+  const playerObjs = [];
+  const playerCells = teamCell.querySelectorAll(
+    '[id^="draft-cell-"].cell.drafted',
+  );
+
+  for (const playerCell of playerCells) {
+    playerObjs.push(parsePlayerCell(playerCell));
   }
 
   return {
-    overallPick: Number(overallPickMatch[1]),
-    displayedPick:
-      cell.querySelector(".pick")?.textContent?.trim() ?? null,
-    playerId,
-    name:
-      cell.querySelector(".player-name")?.textContent?.trim() ?? null,
-    positionDetails:
-      cell.querySelector(".position")?.textContent?.trim() ?? null
+    team_name: teamNameElement.textContent,
+    players: playerObjs,
   };
 }
 
 async function scanDraftBoard() {
-  scanScheduled = false;
+  const teamObjects = [];
+  const teams = document.querySelectorAll(".team-column");
 
-  const picksByNumber = new Map();
-
-  const cells = document.querySelectorAll(
-    '[id^="draft-cell-"].cell.drafted'
-  );
-
-  for (const cell of cells) {
-    const pick = parseDraftCell(cell);
-
-    if (pick) {
-      // Prevent duplicate cells for the same overall pick.
-      picksByNumber.set(pick.overallPick, pick);
-    }
+  for (const team of teams) {
+    const teamObj = parseTeamColumn(team);
+    console.assert(teamObj.team_name && teamObj.players);
+    teamObjects.push(teamObj);
   }
 
-  const picks = [...picksByNumber.values()].sort(
-    (a, b) => a.overallPick - b.overallPick
-  );
-
-  const serialized = JSON.stringify(picks);
-
-  // Do not write to storage when nothing changed.
-  if (serialized === previousResult) {
-    return;
+  const serialized = JSON.stringify(teamObjects);
+  if (serialized !== prevRes) {
+    previousResult = serialized;
+    const draftedPlayers = teamObjects
+      .flatMap((teamObj) => teamObj.players)
+      .sort((a, b) => a.overall_pick - b.overall_pick);
+    await chrome.storage.local.set({
+      [PICKS_KEY]: draftedPlayers,
+      [TEAMS_KEY]: teamObjects,
+    });
+    console.log("[Sleeper Draft Monitor] Teams updated:", teamObjects);
   }
+}
 
-  previousResult = serialized;
+function observeDraftBoard(draftBoard) {
+  const draftBoardObserver = new MutationObserver(scanDraftBoard);
 
-  await chrome.storage.local.set({
-    [STORAGE_KEY]: picks
+  draftBoardObserver.observe(draftBoard, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["class", "id", "src", "aria-label"],
   });
-
-  console.log("[Sleeper Draft Monitor] Picks updated:", picks);
 }
 
-function scheduleScan() {
-  if (scanScheduled) {
+const waitForBoard = new MutationObserver(() => {
+  const draftBoard = document.querySelector(".draft-board");
+  if (!draftBoard) {
     return;
   }
 
-  scanScheduled = true;
-
-  // Combine multiple React DOM mutations into one scan.
-  requestAnimationFrame(scanDraftBoard);
-}
-
-const observer = new MutationObserver(scheduleScan);
-
-observer.observe(document.documentElement, {
-  subtree: true,
-  childList: true,
-  characterData: true,
-  attributes: true,
-  attributeFilter: ["class", "id", "aria-label", "src"]
+  console.log("[Sleeper Draft Monitor] Draft Board found.");
+  waitForBoard.disconnect();
+  scanDraftBoard();
+  observeDraftBoard(draftBoard);
 });
 
-// Capture picks that were already present when the extension loaded.
-scanDraftBoard();
+waitForBoard.observe(document.documentElement, {
+  subtree: true,
+  childList: true,
+});

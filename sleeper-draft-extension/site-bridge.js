@@ -1,5 +1,5 @@
-const STORAGE_KEY = "sleeperDraftPicks";
-const TEAMS = "sleeperTeamPicks";
+const PICKS_KEY = "sleeperDraftPicks";
+const TEAMS_KEY = "sleeperTeamPicks";
 
 function sendPicksToWebsite(picks, teams) {
   window.postMessage(
@@ -14,12 +14,10 @@ function sendPicksToWebsite(picks, teams) {
 }
 
 async function sendCurrentPicks() {
-  const result = await chrome.storage.local.get([STORAGE_KEY, TEAMS]);
+  const result = await chrome.storage.local.get([PICKS_KEY, TEAMS_KEY]);
 
-  const picks = result[STORAGE_KEY] ?? [];
-  const teams = result[TEAMS] ?? [];
-
-  // console.log("teams", teams)
+  const picks = result[PICKS_KEY] ?? [];
+  const teams = result[TEAMS_KEY] ?? [];
 
   sendPicksToWebsite(picks, teams);
 }
@@ -31,8 +29,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 
   sendPicksToWebsite(
-    changes[STORAGE_KEY]?.newValue ?? [],
-    changes[TEAMS]?.newValue ?? [],
+    changes[PICKS_KEY]?.newValue ?? [],
+    changes[TEAMS_KEY]?.newValue ?? [],
   );
 });
 
