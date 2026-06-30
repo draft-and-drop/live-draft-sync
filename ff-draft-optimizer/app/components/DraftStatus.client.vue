@@ -4,6 +4,7 @@ const { data: fpRankings } = useFetch("/api/fantasypros");
 const { data: dsRankings } = useFetch("/api/draftsharks");
 const { data: dkRankings } = useFetch("/api/draftkings");
 const { data: fgRankings } = useFetch("/api/footballguys");
+const { data: fantasyCalcRankings } = useFantasyCalc();
 
 let stopBridge: (() => void) | undefined;
 
@@ -117,6 +118,20 @@ onUnmounted(() => {
             <div>
               {{ index + 1 }}. ({{ player.sleeper_id }})
               {{ player.player_name }}
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <div>Fantasy Calc</div>
+      <ul>
+        <li v-for="(p, index) in fantasyCalcRankings" :key="p.player.sleeperId">
+          <div style="padding: 0.2rem">
+            <div>
+              {{ index + 1 }}. ({{ p.player.sleeperId }})
+              {{ p.player.name }}
             </div>
           </div>
         </li>
