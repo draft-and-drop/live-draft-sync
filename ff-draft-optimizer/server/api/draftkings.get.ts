@@ -1,3 +1,5 @@
+import playerIdMapJson from "../data/dk-sleeper-id-map.json";
+
 type DraftKingsResponse = {
   adps: DraftKingsPlayerDTO[];
 };
@@ -13,13 +15,7 @@ type DraftKingsPlayerDTO = {
   opener_adp: number;
   adp_change_since_last_week: number;
   adp_change_since_open: number;
-  sleeper_id: string | null;
 };
-
-import { parse } from "node-html-parser";
-// import { writeFile } from "node:fs/promises";
-
-import playerIdMapJson from "../data/dk-sleeper-id-map.json";
 
 const playerIdMap = playerIdMapJson as Record<string, string>;
 

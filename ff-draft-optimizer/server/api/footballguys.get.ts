@@ -1,12 +1,12 @@
-type FootballGuysPlayerDto = {
+import { parse } from "node-html-parser";
+import playerIdMapJson from "#server/data/fg-sleeper-id-map.json";
+
+type FootballGuysPlayerDTO = {
   player_name: string;
   team: string;
   football_guys_id: string;
   sleeper_id: string | null;
 };
-
-import { parse } from "node-html-parser";
-import playerIdMapJson from "../data/fg-sleeper-id-map.json";
 
 const playerIdMap = playerIdMapJson as Record<string, string>;
 
@@ -17,7 +17,7 @@ export default defineEventHandler(async () => {
 
   const root = parse(htmlString);
 
-  const players: FootballGuysPlayerDto[] = root
+  const players: FootballGuysPlayerDTO[] = root
     .querySelectorAll("tr")
     .slice(1)
     .map((tr) => {
@@ -31,7 +31,7 @@ export default defineEventHandler(async () => {
         player_name: a?.text.trim() ?? "",
         team: tds[3]?.text.trim().split("/")[0]?.trim() ?? "",
         football_guys_id: footballGuysId,
-        sleeper_id: playerIdMap[footballGuysId] ?? null
+        sleeper_id: playerIdMap[footballGuysId] ?? null,
       };
     });
 

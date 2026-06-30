@@ -1,4 +1,7 @@
-type DraftSharksPlayerDto = {
+import { parse } from "node-html-parser";
+import playerIdMapJson from "#server/data/ds-sleeper-id-map.json";
+
+type DraftSharksPlayerDTO = {
   ds_id: string;
   player_name: string;
   teamId: string;
@@ -8,11 +11,6 @@ type DraftSharksPlayerDto = {
   isRookie: boolean;
   sleeper_id: string | null;
 };
-
-import { parse } from "node-html-parser";
-// import { writeFile } from "node:fs/promises";
-
-import playerIdMapJson from "../data/ds-sleeper-id-map.json";
 
 const playerIdMap = playerIdMapJson as Record<string, string>;
 
@@ -39,7 +37,7 @@ export default defineEventHandler(async () => {
       ),
     );
 
-  const players: DraftSharksPlayerDto[] = elements.map((element) => {
+  const players: DraftSharksPlayerDTO[] = elements.map((element) => {
     const draft_sharks_id = element.getAttribute("data-key") ?? "";
     return {
       ds_id: draft_sharks_id,
@@ -55,37 +53,3 @@ export default defineEventHandler(async () => {
 
   return players;
 });
-
-// export default defineEventHandler(async () => {
-//   const htmlString = await $fetch<string>(
-//     "https://www.draftsharks.com/adp/consensus",
-//   );
-
-//   const root = parse(htmlString);
-
-//   const script = root
-//     .querySelectorAll("script")
-//     .find((element) => element.text.includes("var vueAppData"));
-
-//   if (!script) {
-//     throw new Error("vueAppData was not found");
-//   }
-
-//   const match = script.text.match(/var\s+vueAppData\s*=\s*({[\s\S]*?});/);
-
-//   if (!match?.[1]) {
-//     throw new Error("Could not extract vueAppData");
-//   }
-
-//   console.log(JSON.parse(match[1]));
-
-// //   await writeFile(
-// //     "./vueAppData.json",
-// //     JSON.stringify(JSON.parse(match[1]), null, 2),
-// //     "utf8",
-// //   );
-
-//   let players: DraftSharksPlayerDto[] = [];
-
-//   return players;
-// });
