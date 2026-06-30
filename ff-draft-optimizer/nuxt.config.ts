@@ -7,6 +7,11 @@ export default defineNuxtConfig({
   },
   typescript: {
     typeCheck: true,
-    strict: true
+    strict: true,
+  },
+  routeRules: {
+    "/api/**": {
+      swr: 60 * 15, // cache API responses on server for 15 minutes
+    },
   },
 });
