@@ -17,8 +17,10 @@
     "update-csv": "npm run add-ds && npm run add-dk"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.2",
     "node-html-parser": "^8.0.3",
     "nuxt": "^4.4.8",
+    "tailwindcss": "^4.3.2",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
   },
