@@ -21,4 +21,9 @@ export default defineNuxtConfig({
     },
   },
   modules: ["@nuxt/icon"],
+  icon: {
+    serverBundle: {
+      collections: ["material-symbols"],
+    },
+  },
 });
