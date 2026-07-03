@@ -44,25 +44,67 @@ onMounted(() => {
 onUnmounted(() => {
   stopBridge?.();
 });
+
+function positionColour(pos: string): string {
+  switch (true) {
+    case pos.startsWith("RB"):
+      return "bg-green-300";
+    case pos.startsWith("WR"):
+      return "bg-blue-300";
+    case pos.startsWith("TE"):
+      return "bg-orange-300";
+    case pos.startsWith("QB"):
+      return "bg-red-300";
+    case pos.startsWith("K"):
+      return "bg-purple-300";
+    case pos.startsWith("DEF"):
+      return "bg-stone-300";
+    default:
+      return "bg-primary"
+  }
+}
 </script>
 
 <template>
+  <div class="flex justify-center">
+    <div v-for="(team, teamIndex) in teams" class="">
+      <div class="text-center font-semibold">
+        <div class="text-2xl badge p-4 badge-ghost m-2">{{ team.team_name }}</div>
+      </div>
+      <div v-for="(player, playerIndex) in team.players">
+        <div v-if="player.name === 'nan'" class="bg-neutral-500 rounded-box w-46 h-18 m-0.5"></div>
+        <div v-else class="flex justify-between rounded-box text-primary-content w-46 h-18 p-1 m-0.5"
+          :class="positionColour(player.position_details)">
+          <div class="min-w-0 flex-1">
+            <div class="card-title truncate">
+              {{ player.name }}
+            </div>
 
-  <div class="draft-board">
-    <div v-for="team in teams" class="team-column">
-      <div class="team-header">{{ team.team_name }}</div>
-      <div v-for="player in team.players" class="draft-cell">
-        <div>
-          {{ player.name }}
-        </div>
-        <div>
-          {{ player.displayed_pick }}
-        </div>
-        <div>
-          {{ player.position_details }}
-        </div>
-        <div>
-          <img :src="player.img_url" width="30" height="30">
+            <div class="text-sm text-primary-content/85 truncate">
+              {{ player.position_details }}
+            </div>
+
+            <div v-if="playerIndex % 2 === 0">
+              <Icon v-if="teamIndex === (teams.length - 1)" name="material-symbols:arrow-downward-rounded" size="16" />
+              <Icon v-else name="material-symbols:arrow-forward-rounded" size="16" />
+            </div>
+
+            <div v-else>
+              <Icon v-if="teamIndex === 0" name="material-symbols:arrow-downward-rounded" size="16" />
+              <Icon v-else name="material-symbols:arrow-back-rounded" size="16" />
+            </div>
+          </div>
+
+          <div class="shrink-0 text-center overflow-hidden">
+            <div class="text-primary-content/60">
+              {{ player.displayed_pick }}
+            </div>
+
+            <div class="overflow-hidden">
+              <img v-if="player.img_url && player.img_url !== 'nan'" :src="player.img_url" width="55">
+              <Icon v-else name="material-symbols:sports-football-rounded" size="36" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -70,7 +112,9 @@ onUnmounted(() => {
 
   <br />
 
-  <div style="display: flex">
+  <div class="justify-center"></div>
+
+  <div class="flex justify-around text-xl">
     <div>
       <div>Fantasy Pros ECR</div>
       <ul>
@@ -158,16 +202,6 @@ onUnmounted(() => {
   padding: 0.2rem;
 }
 
-.img {
-  width: 30px;
-  height: 30px;
-}
-
-.team-header {
-  text-align: center;
-  font-size: large;
-  color: grey;
-}
 
 .draft-cell {
   min-width: 150px;

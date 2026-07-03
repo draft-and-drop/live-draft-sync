@@ -44,6 +44,20 @@ function parseTeamColumn(teamCell) {
     playerObjs.push(parsePlayerCell(playerCell));
   }
 
+  // fill remaining team picks as "empty"
+  const totalPickCount = teamCell.querySelectorAll(".cell-container").length;
+  for (let i = playerObjs.length; i < totalPickCount; i++) {
+    playerObjs.push({
+      sleeper_id: 0,
+      overall_pick: 0,
+      displayed_pick: "nan",
+      name: "nan",
+      img_url: "nan",
+      position_details: "nan"
+    });
+  }
+  
+
   return {
     team_name: teamNameElement.textContent,
     players: playerObjs,
