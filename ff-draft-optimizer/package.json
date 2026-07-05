@@ -8,6 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "test": "npx playwright test",
     "s-map": "tsx scripts/create-fp-sleeper-map.ts",
     "ds-map": "tsx scripts/create-ds-sleeper-map.ts",
     "dk-map": "tsx scripts/create-dk-sleeper-map.ts",
