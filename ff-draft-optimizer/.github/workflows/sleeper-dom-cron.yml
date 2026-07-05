@@ -1,0 +1,46 @@
+name: Scheduled Sleeper DOM Check
+
+on:
+  schedule:
+    # Every day at 12:00 UTC
+    - cron: "0 12 * * *"
+
+    # also have the option to trigger manually
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Check Sleeper DOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Sleeper DOM test
+        run: npx playwright test test/scraper-verify.spec.ts
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sleeper-dom-playwright-report
+          path: playwright-report/
+          retention-days: 15
+  
