@@ -1,7 +1,7 @@
 const PICKS_KEY = "sleeperDraftPicks";
 const TEAMS_KEY = "sleeperTeamPicks";
 
-let prevRes = "";
+let previousResult = "";
 
 function parsePlayerCell(cell) {
   console.assert(cell instanceof HTMLElement);
@@ -75,7 +75,7 @@ async function scanDraftBoard() {
   }
 
   const serialized = JSON.stringify(teamObjects);
-  if (serialized !== prevRes) {
+  if (serialized !== previousResult) {
     previousResult = serialized;
     const draftedPlayers = teamObjects
       .flatMap((teamObj) => teamObj.players)
