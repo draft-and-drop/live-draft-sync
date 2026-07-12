@@ -10,12 +10,13 @@ interface FantasyProsPlayerDTO {
   rank_ecr: number;
   rank_ave: string;
   player_position_id: string;
-  team_id: string;
+  player_team_id: string;
   tier: number;
   sleeper_id: string | null;
 }
 
 const playerIdMap = playerIdMapJson as Record<string, string>;
+const MAX_ENTRIES = 300;
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
     },
   );
 
-  return response.players.map((player) => ({
+  return response.players.slice(0, MAX_ENTRIES).map((player) => ({
     ...player,
     sleeper_id: playerIdMap[String(player.player_id)] ?? null,
   }));

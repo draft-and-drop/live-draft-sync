@@ -18,13 +18,14 @@ type DraftKingsPlayerDTO = {
 };
 
 const playerIdMap = playerIdMapJson as Record<string, string>;
+const MAX_ENTRIES = 300;
 
 export default defineEventHandler(async () => {
   const res = await $fetch<DraftKingsResponse>(
     "https://www.occupyfantasyapi.com/best_ball/adps?site=draftkings&contest=all",
   );
 
-  return res.adps.map((player) => ({
+  return res.adps.slice(0, MAX_ENTRIES).map((player) => ({
     ...player,
     sleeper_id: playerIdMap[player.site_player_id] ?? null,
   }));
