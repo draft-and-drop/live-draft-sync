@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @plugin "daisyui"{
    themes: nord --default, dim --prefersdark;
@@ -5,4 +6,13 @@
 
  @theme {
   --font-sans: "Poppins", sans-serif;
+  --color-fantasy-pros: rgb(3, 116, 231);
+  --color-draft-sharks: rgb(123, 104, 238);
+  --color-draft-kings: rgb(255, 124, 20);
+  --color-football-guys: rgb(248, 226, 25);
+  --color-ffpc: rgb(66, 147, 246);
+  --color-ff-trade-calc: #052151;
+
+  --text-xxs: 11px;
+  --text-xxxs: 10px;
 }
