@@ -1,27 +1,11 @@
-import fs from "node:fs";
-import Papa from "papaparse";
 import { parse } from "node-html-parser";
-
-type Row = Record<string, string>;
-
-const file_name = "player_ids.csv";
-
-const normalize = (value = "") =>
-  value
-    .toLowerCase()
-    .replace(/\b(jr|sr|ii|iii|iv)\b/g, "")
-    .replace(/[^a-z0-9]/g, "");
-
-const csv = Papa.parse<Row>(fs.readFileSync(file_name, "utf8"), {
-  header: true,
-  skipEmptyLines: true,
-}).data;
+import { normalize, addToCSV } from "./mappings-helper";
 
 const html = await fetch(
   "https://www.draftsharks.com/rankings/load-rows?offset=0&limit=255&fantasyPosition=&pprSuperflexSlug=ppr&sort=-dsValue&researchDepth=rankings",
 ).then((response) => response.text());
 
-const draftSharksIds = new Map(
+const draftSharksIds = new Map<string, string>(
   parse(html)
     .querySelectorAll("tbody[data-player-row]")
     .filter((element) =>
@@ -35,23 +19,4 @@ const draftSharksIds = new Map(
     ]),
 );
 
-const updated = csv.map((player) => {
-  const names = Object.entries(player)
-    .filter(([column]) => column.endsWith("_name"))
-    .map(([, name]) => name);
-
-  const draftSharksId = names
-    .map((name) => draftSharksIds.get(`${normalize(name)}`))
-    .find(Boolean);
-
-  return {
-    ...player,
-    draft_sharks_id: draftSharksId ?? "",
-  };
-});
-
-fs.writeFileSync(file_name, Papa.unparse(updated));
-
-console.log(
-  `Mapped ${updated.filter((p) => p.draft_sharks_id).length} players`,
-);
+addToCSV(draftSharksIds, "draft_sharks_id");
