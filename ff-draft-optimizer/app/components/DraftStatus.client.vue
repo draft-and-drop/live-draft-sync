@@ -1,7 +1,30 @@
 <script setup lang="ts">
+const selectedScoringId = ref(0);
+const scoringFormats = ref([
+  { id: 0, fp_id: "PPR", ds_id: "ppr", name: 'PPR', },
+  { id: 1, fp_id: "HALF", ds_id: "half-ppr", name: 'Half-PPR', },
+  { id: 2, fp_id: "STD", ds_id: "", name: 'Standard', }
+]);
+
+const selectedFormat = computed(() =>
+  scoringFormats.value.find((sf) => sf.id === selectedScoringId.value) ?? scoringFormats.value[0]
+);
+
+const fpFormat = computed(() => selectedFormat.value?.fp_id ?? "PPR");
+const dsFormat = computed(() => selectedFormat.value?.ds_id ?? "ppr");
+
+const selectedPosition = ref("All");
+const positions = ref([
+  { id: 0, name: "All" },
+  { id: 1, name: "QB" },
+  { id: 2, name: "RB" },
+  { id: 3, name: "WR" },
+  { id: 4, name: "TE" },
+]);
+
 const { teams, draftedPlayers, startBridge } = useDraftBridge();
-const { data: fpRankings } = useFetch("/api/fantasypros");
-const { data: dsRankings } = useFetch("/api/draftsharks");
+const { data: fpRankings } = useFetch("/api/fantasypros", { query: { format: fpFormat } });
+const { data: dsRankings } = useFetch("/api/draftsharks", { query: { format: dsFormat } });
 const { data: dkRankings } = useFetch("/api/draftkings");
 const { data: fgRankings } = useFetch("/api/footballguys");
 
@@ -12,24 +35,26 @@ let stopBridge: (() => void) | undefined;
 
 const isOpen = ref(true);
 
+// const isUnlocked = ref(false);
+
 let draftedIds = computed(() => {
   return new Set(draftedPlayers.value.map((player) => player.sleeper_id));
 });
 
 let availableFpPlayers = computed(() => {
-  return fpRankings.value?.filter((player) => isAvailable(player)) ?? [];
+  return fpRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.player_position_id === selectedPosition.value)) ?? [];
 });
 
 let availableDsPlayers = computed(() => {
-  return dsRankings.value?.filter((player) => isAvailable(player)) ?? [];
+  return dsRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value)) ?? [];
 });
 
 let availableDkPlayers = computed(() => {
-  return dkRankings.value?.filter((player) => isAvailable(player));
+  return dkRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.pos === selectedPosition.value));
 });
 
 let availableFgPlayers = computed(() => {
-  return fgRankings.value?.filter((player) => isAvailable(player));
+  return fgRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value));
 });
 
 // let availableFantasyCalcPlayers = computed(() => {
@@ -37,7 +62,7 @@ let availableFgPlayers = computed(() => {
 // });
 
 let availableFfpcPlayers = computed(() => {
-  return ffpcRankings.value?.filter((player) => isAvailable(player));
+  return ffpcRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value));
 });
 
 function zebraStripes(index: number): string {
@@ -48,6 +73,13 @@ function isAvailable(player: any): boolean {
   console.assert(player.sleeper_id !== null, `Should always have a sleeper ID: ${player}`);
   return !draftedIds.value.has(player.sleeper_id);
 }
+
+// async function updateRankings() {
+//   await Promise.all([
+//     refreshFp(),
+//     refreshDs()
+//   ])
+// }
 
 onMounted(() => {
   stopBridge = startBridge();
@@ -169,26 +201,114 @@ function positionColour(pos: string): string {
       rounded-t-2xl bg-base-100 shadow-2xl
       transition-transform duration-300 ease-in-out
     " :class="isOpen
-      ? 'translate-y-0'
-      : 'translate-y-[calc(100%-3.5rem)]'
+      ? 'translate-y-2'
+      : 'translate-y-[calc(100%-3rem)]'
       ">
 
     <!-- Always-visible header/handle -->
-    <button class="
-        btn flex h-8 shrink-0 content-center items-center justify-between bg-black/30 rounded-t-xl lg:px-24
-      " :aria-expanded="isOpen" aria-controls="bottom-menu-content" @click="isOpen = !isOpen">
-      <span class="font-semibold">Rankings</span>
+    <div class="
+        flex h-8 shrink-0 content-center items-center justify-between bg-black/30 rounded-t-xl lg:px-24
+      " :aria-expanded="isOpen" aria-controls="bottom-menu-content">
 
-      <span class="flex transition-transform duration-300" :class="{ 'rotate-180': isOpen }">
-        <Icon name="material-symbols:arrow-upward" size="25" />
-      </span>
-    </button>
+      <button class="btn btn-xs btn-ghost" onclick="my_modal_1.showModal()">
+        <span class="text-sm">Strategy</span>
+        <Icon name="material-symbols:help-outline-rounded" size="20" />
+      </button>
+
+      <div class="flex gap-2">
+        <select class="select select-xs w-fit" v-model.number="selectedScoringId">
+          <option disabled value="">Scoring Format</option>
+          <option v-for="sf in scoringFormats" :key="sf.id" :value="sf.id">
+            {{ sf.name }}
+          </option>
+        </select>
+
+        <select class="select select-xs w-fit" v-model="selectedPosition">
+          <option disabled value="">Positions</option>
+          <option v-for="pos in positions" :key="pos.id" :value="pos.name">
+            {{ pos.name }}
+          </option>
+        </select>
+      </div>
+
+      <dialog id="my_modal_1" class="modal">
+        <div class="modal-box w-fit">
+          <div class="flex flex-col gap-4">
+            <h3 class="text-lg font-bold">Draft Strategies</h3>
+            <h1>1. Double Anchor RB</h1>
+            <h1>2. Late QB/TE</h1>
+            <h1>3. Balanced</h1>
+          </div>
+          <!--           <div class="pt-4 min-w-50">
+              <select class="select" v-model="selectedScoringId">
+              <option disabled value="">Scoring Format</option>
+              <option v-for="sf in scoringFormats" :key="sf.id" :value="sf.id">
+                {{ sf.name }}
+              </option> 
+            </select>
+          </div>-->
+          <div class="modal-action">
+            <form method="dialog">
+              <div class="flex gap-2">
+                <button class="btn">Close</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </dialog>
+
+
+      <button class="btn btn-xs btn-ghost" @click="isOpen = !isOpen">
+        <span class="text-sm">{{ isOpen ? 'Hide' : 'Show' }}</span>
+        <span class="flex transition-transform duration-300" :class="{ 'rotate-180': isOpen }">
+          <Icon name="material-symbols:arrow-upward" size="25" />
+        </span>
+      </button>
+
+    </div>
 
     <!-- Scrollable content -->
     <!-- Ranking lists -->
     <div id="bottom-menu-content" class="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
 
       <div class="flex justify-around gap-1">
+
+        <!-- <div>
+          <button @click="isUnlocked = !isUnlocked" :class="isUnlocked ? 'bg-green-200' : 'bg-red-200'"
+            class="btn btn-xs border text-center rounded-2xl px-2 text-sm my-1 flex items-center justify-center gap-2 w-full">
+            <span>Custom</span>
+            <Icon v-if="isUnlocked" name="material-symbols:lock-open-right" size="15" />
+            <Icon v-else name="material-symbols:lock" size="15" />
+            <div class="flex font-light">
+              <span v-if="isUnlocked">Click to lock</span>
+              <span v-else>Click to unlock</span>
+            </div>
+          </button>
+          <ul class="list shadow-md">
+            <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
+              <div class="list-row text-xs py-1 pr-0 rounded-none flex justify-between" :class="zebraStripes(index)">
+                <div>
+                  <div>
+                    {{ index + 1 }}. {{ player.player_name }}
+                  </div>
+                  <div class="text-xxs uppercase font-semibold opacity-60">
+                    <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
+                    {{ player.position }} - {{ player.team }}
+                  </div>
+                </div>
+                <div class="flex items-center justify-center opacity-60 mr-">
+                  <button class="btn btn-xs" :disabled="!isUnlocked">
+                    <Icon name="material-symbols:arrow-downward" size="20" />
+                  </button>
+                  <button class="btn btn-xs" :disabled="!isUnlocked">
+                    <Icon name="material-symbols:arrow-upward" size="20" />
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div> -->
+
         <div>
           <div class="bg-fantasy-pros/60 text-center rounded-2xl px-2 text-sm my-1.5">Fantasy Pros ECR</div>
           <ul class="list shadow-md">
@@ -275,7 +395,7 @@ function positionColour(pos: string): string {
 
 
         <div>
-          <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys</div>
+          <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">

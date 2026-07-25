@@ -14,15 +14,18 @@ type DraftSharksPlayerDTO = {
 
 const playerIdMap = playerIdMapJson as Record<string, string>;
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  const query = getQuery(event);
+
+  console.log('New request: ' + getRequestURL(event))
+  
   const htmlString = await $fetch<string>(
     "https://www.draftsharks.com/rankings/load-rows",
     {
       query: {
         offset: 0,
         limit: 255,
-        position: "",
-        pprSuperflexSlug: "ppr",
+        pprSuperflexSlug: query.format,
         sort: "-dsValue",
         researchDepth: "rankings",
       },

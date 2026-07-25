@@ -21,6 +21,10 @@ const MAX_ENTRIES = 300;
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
 
+  const query = getQuery(event);
+
+  console.log('New request: ' + getRequestURL(event));
+
   if (!config.fantasyProsApiKey) {
     throw createError({
       statusCode: 500,
@@ -36,8 +40,8 @@ export default defineEventHandler(async (event) => {
       },
       query: {
         position: "ALL",
-        scoring: "PPR",
-        type: "ADP",
+        scoring: query.format,
+        type: "DRAFT",
       },
     },
   );
