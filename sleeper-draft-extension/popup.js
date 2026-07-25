@@ -11,28 +11,32 @@ function renderPicks(picks) {
     return;
   }
 
-  statusElement.textContent = `${picks.length} players drafted`;
-
+  let pickCount = 0;
   for (const pick of picks) {
-    const row = document.createElement("div");
-    row.className = "pick";
-
-    const title = document.createElement("div");
-    title.className = "pick-number";
-    title.textContent =
-      `${pick.displayed_pick ?? pick.displayed_pick}: ` +
-      `${pick.name ?? "Unknown player"}`;
-
-    const details = document.createElement("div");
-    details.textContent = pick.positionDetails ?? "";
-
-    const playerId = document.createElement("div");
-    playerId.className = "player-id";
-    playerId.textContent = `Sleeper ID: ${pick.sleeper_id}`;
-
-    row.append(title, details, playerId);
-    picksElement.appendChild(row);
+    if (pick.name !== "nan") {
+        const row = document.createElement("div");
+        row.className = "pick";
+    
+        const title = document.createElement("div");
+        title.className = "pick-number";
+        title.textContent =
+          `${pick.displayed_pick ?? pick.displayed_pick}: ` +
+          `${pick.name ?? "Unknown player"}`;
+    
+        const details = document.createElement("div");
+        details.textContent = pick.positionDetails ?? "";
+    
+        const playerId = document.createElement("div");
+        playerId.className = "player-id";
+        playerId.textContent = `Sleeper ID: ${pick.sleeper_id}`;
+    
+        row.append(title, details, playerId);
+        picksElement.appendChild(row);
+        pickCount++;
+    }
   }
+
+    statusElement.textContent = `${pickCount} players drafted`;
 }
 
 async function loadCurrentPicks() {
