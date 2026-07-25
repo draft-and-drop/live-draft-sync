@@ -2,6 +2,7 @@ import { parse } from "node-html-parser";
 import playerIdMapJson from "#server/data/fg-sleeper-id-map.json";
 
 type FootballGuysPlayerDTO = {
+  tier: string
   player_name: string;
   position: string;
   team: string;
@@ -19,21 +20,28 @@ export default defineEventHandler(async () => {
 
   const root = parse(htmlString);
 
-  const players: FootballGuysPlayerDTO[] = root
-    .querySelectorAll("tr[data-playerid][data-rank][data-playername]")
-    .slice(0, MAX_ENTRIES)
-    .map((tr) => {
+  const trs = root.querySelectorAll("tr");
+  let currTier: string = "0";
+  const players: FootballGuysPlayerDTO[] = [];
+
+  for (const tr of trs) {
+    if (tr.innerText.startsWith("Tier")) {
+      currTier = tr.innerText.split(" ")[1] ?? "unknown";
+      console.log("Current Tier is ", tr.innerText.split(" ")[1])
+    } else if (tr.matches('[data-playerid][data-rank][data-playername]')) {
       const spans = tr.querySelectorAll('[class^="pos-"], [class^="team-abbr"]');
       const footballGuysId = tr?.getAttribute("data-playerid") ?? "";
 
-      return {
+      players.push({
+        tier: currTier,
         player_name: tr.getAttribute("data-playername") ?? "",
         team: spans[0]?.innerText ?? "",
         position: spans[1]?.innerText.replace(/[0-9]/g, "") ?? "",
         football_guys_id: footballGuysId,
         sleeper_id: playerIdMap[footballGuysId] ?? null,
-      };
-    });
+      });
+    }
+  }
 
   return players;
 });

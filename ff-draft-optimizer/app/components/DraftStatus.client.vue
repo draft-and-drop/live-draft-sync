@@ -25,8 +25,9 @@ const positions = ref([
 const { teams, draftedPlayers, startBridge } = useDraftBridge();
 const { data: fpRankings } = useFetch("/api/fantasypros", { query: { format: fpFormat } });
 const { data: dsRankings } = useFetch("/api/draftsharks", { query: { format: dsFormat } });
-const { data: dkRankings } = useFetch("/api/draftkings");
+const { data: adpRankings } = useFetch("/api/adp", { query: { format: fpFormat } });
 const { data: fgRankings } = useFetch("/api/footballguys");
+const { data: vegasPlayers } = useVegasData();
 
 const { data: ffpcRankings } = useFetch("/api/ffpc");
 // const { data: fantasyCalcRankings } = useFantasyCalc();
@@ -49,17 +50,25 @@ let availableDsPlayers = computed(() => {
   return dsRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value)) ?? [];
 });
 
-let availableDkPlayers = computed(() => {
-  return dkRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.pos === selectedPosition.value));
+let availableFgPlayers = computed(() => {
+  return fgRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value)) ?? [];
 });
 
-let availableFgPlayers = computed(() => {
-  return fgRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value));
+let availableAdpPlayers = computed(() => {
+  return adpRankings.value?.filter(player => isAvailable(player) && (selectedPosition.value === "All" || player.player_position_id === selectedPosition.value)) ?? [];
 });
 
 // let availableFantasyCalcPlayers = computed(() => {
 //   return fantasyCalcRankings.value?.filter((p) => !draftedIds.value.has(p.player.sleeperId));
 // });
+
+let availableVegasPlayers = computed(() => {
+  return availableAdpPlayers.value?.map(player => {
+    const vegasPlayer = vegasPlayers.value?.find(vegasPlayer => vegasPlayer.PlayerID === player.sleeper_id);
+
+    return { VegasPlayer: vegasPlayer, ...player };
+  })
+})
 
 let availableFfpcPlayers = computed(() => {
   return ffpcRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value));
@@ -332,7 +341,7 @@ function positionColour(pos: string): string {
         </div>
 
         <div>
-          <div class="bg-draft-sharks/60 text-center rounded-2xl px-2 text-sm my-1.5">Draft Sharks 3D</div>
+          <div class="bg-draft-sharks/60 text-center rounded-2xl px-2 text-sm my-1.5">Draft Sharks 3DR</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableDsPlayers" :key="player.ds_id">
               <div v-if="index === 0 || player.overallTier !== availableDsPlayers[index - 1]?.overallTier"
@@ -353,28 +362,7 @@ function positionColour(pos: string): string {
           </ul>
         </div>
 
-
-        <div>
-          <div class="bg-draft-kings/30 text-center rounded-2xl px-2 text-sm my-1.5">Draft Kings Best Ball (ADP)
-          </div>
-          <ul class="list shadow-md">
-            <li v-for="(player, index) in availableDkPlayers" :key="player.site_player_id">
-              <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
-                <div>
-                  <div>
-                    {{ player.curr_adp.toFixed(0) }}. {{ player.player_name }}
-                  </div>
-                  <div class="text-xxs uppercase font-semibold opacity-60">
-                    <div class="badge [--size:0.60rem]" :class="positionColour(player.pos)"></div>
-                    {{ player.pos }} - {{ player.team }}
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div>
+        <!-- <div>
           <div class="bg-ffpc/30 text-center rounded-2xl px-2 text-sm my-1.5">FFPC $2K ADP</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableFfpcPlayers" :key="index">
@@ -391,13 +379,16 @@ function positionColour(pos: string): string {
               </div>
             </li>
           </ul>
-        </div>
+        </div> -->
 
 
         <div>
           <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
+              <div v-if="index === 0 || player.tier !== availableFgPlayers[index - 1]?.tier"
+                class="list-row bg-football-guys/15 px-2 py-0 text-xs leading-tight rounded-none ">Tier {{
+                  player.tier }}</div>
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
                   <div>
@@ -407,6 +398,31 @@ function positionColour(pos: string): string {
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
                     {{ player.position }} - {{ player.team }}
                   </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+
+        <div>
+          <div class="bg-pink-500/30 text-center rounded-2xl px-2 text-sm my-1.5">ADP + Implied Points
+          </div>
+          <ul class="list shadow-md">
+            <li v-for="(player, index) in availableVegasPlayers" :key="player.player_id">
+              <div class="list-row grid grid-cols-4 justify-between text-xs py-1.5 rounded-none"
+                :class="zebraStripes(index)">
+                <div class="col-span-3">
+                  <div>
+                    {{ player.rank_ecr }}. {{ player.player_name }}
+                  </div>
+                  <div class="text-xxs uppercase font-semibold opacity-60">
+                    <div class="badge [--size:0.60rem]" :class="positionColour(player.player_position_id)"></div>
+                    {{ player.player_position_id }} - {{ player.player_team_id }}
+                  </div>
+                </div>
+                <div class="col-span-1 flex text-right items-center font-semibold opacity-80">{{
+                  player.VegasPlayer?.FantasyPoints }}
                 </div>
               </div>
             </li>
