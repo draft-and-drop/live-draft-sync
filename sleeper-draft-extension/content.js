@@ -49,7 +49,7 @@ function parseTeamColumn(teamCell) {
   for (let i = playerObjs.length; i < totalPickCount; i++) {
     playerObjs.push({
       sleeper_id: 0,
-      overall_pick: 0,
+      overall_pick: 999,
       displayed_pick: "nan",
       name: "nan",
       img_url: "nan",
