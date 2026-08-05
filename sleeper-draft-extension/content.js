@@ -44,6 +44,19 @@ function parseTeamColumn(teamCell) {
     playerObjs.push(parsePlayerCell(playerCell));
   }
 
+  // If this team has the next pick, add a cell to indicate
+  const next = teamCell.querySelector(".current-pick");
+  if (next) {
+    playerObjs.push({
+      sleeper_id: 0,
+      overall_pick: 999,
+      displayed_pick: "nan",
+      name: "NEXT_PICK",
+      img_url: "nan",
+      position_details: teamCell.querySelector(".timer-text").innerText,
+    });
+  }
+
   // fill remaining team picks as "empty"
   const totalPickCount = teamCell.querySelectorAll(".cell-container").length;
   for (let i = playerObjs.length; i < totalPickCount; i++) {
@@ -53,10 +66,9 @@ function parseTeamColumn(teamCell) {
       displayed_pick: "nan",
       name: "nan",
       img_url: "nan",
-      position_details: "nan"
+      position_details: "nan",
     });
   }
-  
 
   return {
     team_name: teamNameElement.textContent,
@@ -84,7 +96,6 @@ async function scanDraftBoard() {
       [PICKS_KEY]: draftedPlayers,
       [TEAMS_KEY]: teamObjects,
     });
-    console.log("[Sleeper Draft Monitor] Teams updated:", teamObjects);
   }
 }
 

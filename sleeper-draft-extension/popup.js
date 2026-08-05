@@ -13,7 +13,7 @@ function renderPicks(picks) {
 
   let pickCount = 0;
   for (const pick of picks) {
-    if (pick.name !== "nan") {
+    if (pick.overall_pick !== 999) {
         const row = document.createElement("div");
         row.className = "pick";
     
