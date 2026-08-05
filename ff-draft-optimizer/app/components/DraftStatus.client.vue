@@ -27,16 +27,17 @@ const { data: fpRankings } = useFetch("/api/fantasypros", { query: { format: fpF
 const { data: dsRankings } = useFetch("/api/draftsharks", { query: { format: dsFormat } });
 const { data: adpRankings } = useFetch("/api/adp", { query: { format: fpFormat } });
 const { data: fgRankings } = useFetch("/api/footballguys");
-const { data: vegasPlayers } = useVegasData();
+const { data: vegasData, pending: vegasLoading, error: vegasError } = useVegasData();
 
-const { data: ffpcRankings } = useFetch("/api/ffpc");
-// const { data: fantasyCalcRankings } = useFantasyCalc();
+const vegasPlayers = computed(() => vegasData.value?.vegasPlayers ?? []);
+const nflTeams = computed(() => vegasData.value?.nflTeams ?? []);
+
+let topOffence = computed(() => new Set(nflTeams.value.slice(0, 6).map(t => t.abbr)));
+let bottomOffence = computed(() => new Set(nflTeams.value.slice(-6).map(t => t.abbr)));
 
 let stopBridge: (() => void) | undefined;
 
 const isOpen = ref(true);
-
-// const isUnlocked = ref(false);
 
 let draftedIds = computed(() => {
   return new Set(draftedPlayers.value.map((player) => player.sleeper_id));
@@ -58,20 +59,31 @@ let availableAdpPlayers = computed(() => {
   return adpRankings.value?.filter(player => isAvailable(player) && (selectedPosition.value === "All" || player.player_position_id === selectedPosition.value)) ?? [];
 });
 
-// let availableFantasyCalcPlayers = computed(() => {
-//   return fantasyCalcRankings.value?.filter((p) => !draftedIds.value.has(p.player.sleeperId));
-// });
-
 let availableVegasPlayers = computed(() => {
   return availableAdpPlayers.value?.map(player => {
-    const vegasPlayer = vegasPlayers.value?.find(vegasPlayer => vegasPlayer.PlayerID === player.sleeper_id);
-
+    const vegasPlayer = vegasPlayers.value.find(vegasPlayer => vegasPlayer.PlayerID === player.sleeper_id);
     return { VegasPlayer: vegasPlayer, ...player };
   })
 })
 
-let availableFfpcPlayers = computed(() => {
-  return ffpcRankings.value?.filter((player) => isAvailable(player) && (selectedPosition.value === "All" || player.position === selectedPosition.value));
+
+let currentPickNumber = computed(() => draftedPlayers.value.findIndex(pick => pick.name === "nan") + 1);
+
+let totalRounds = computed(() => teams.value.at(0)?.players.length ?? 0);
+
+let pickSlot = ref(1);
+
+let pickSlots = computed(() => {
+  let pickValues = [];
+  for (let i = 0; i < totalRounds.value; i++) {
+    if (i % 2 == 0) {
+      pickValues.push(i * teams.value.length + pickSlot.value);
+    } else {
+      pickValues.push((i + 1) * teams.value.length - pickSlot.value + 1);
+    }
+  }
+
+  return pickValues.map(n => n -= currentPickNumber.value).filter(n => n >= 0);
 });
 
 function zebraStripes(index: number): string {
@@ -82,13 +94,6 @@ function isAvailable(player: any): boolean {
   console.assert(player.sleeper_id !== null, `Should always have a sleeper ID: ${player}`);
   return !draftedIds.value.has(player.sleeper_id);
 }
-
-// async function updateRankings() {
-//   await Promise.all([
-//     refreshFp(),
-//     refreshDs()
-//   ])
-// }
 
 onMounted(() => {
   stopBridge = startBridge();
@@ -116,35 +121,55 @@ function positionColour(pos: string): string {
       return "bg-primary"
   }
 }
+
+function teamColour(rank: number): string {
+  switch (true) {
+    case rank < 5:
+      return "bg-green-200";
+    case rank > 26:
+      return "bg-red-200";
+    default:
+      return "bg-gray-200";
+  }
+}
 </script>
 
 <template>
+
   <!-- Underlay scroll container with dynamic height -->
   <div class="overflow-auto transition-all duration-300 ease-in-out"
     :class="isOpen ? 'h-[45vh]' : 'h-[calc(100vh-3.5rem)]'">
     <div class="flex justify-center gap-0.5 p-4">
       <div v-for="(team, teamIndex) in teams" class="gap-0.5 flex flex-col">
         <div class="text-center font-semibold">
-          <div class="text-md m-1 truncate w-28">{{ team.team_name }}</div>
+          <div class="text-md m-1 truncate w-28 cursor-pointer"
+            :class="teamIndex + 1 === pickSlot ? 'bg-green-700 border-red rounded-box text-white' : ''"
+            @click="pickSlot = teamIndex + 1">{{ teamIndex + 1 === pickSlot ? 'My Team' : team.team_name }}</div>
         </div>
         <div v-for="(player, playerIndex) in team.players" class="w-30 h-12 rounded-box overflow-hidden">
 
-          <!-- Empty design if no player was drafted here yet -->
-          <div v-if="player.name === 'nan'" class="w-full h-full bg-neutral-500 text-center content-center">
+          <!-- Design for when no player was drafted here yet or this is the next pick -->
+          <div v-if="player.name === 'nan' || player.name === 'NEXT_PICK'"
+            class="w-full h-full text-center content-center static"
+            :class="player.name === 'NEXT_PICK' ? 'bg-yellow-400' : 'bg-neutral-500'">
             <div class="flex justify-end">
               <div class="pr-1 text-primary-content/60 text-xxs text-center content-center">
                 {{ playerIndex + 1 }}. {{ playerIndex % 2 == 0 ? (teamIndex + 1) : (teams.length - teamIndex) }}
               </div>
             </div>
 
+            <div v-if="player.name === 'NEXT_PICK'" class="font-bold text-xs text-yellow-950 text-center">
+              {{ player.position_details }}
+            </div>
+
             <div class="flex justify-between">
 
               <div class="pl-1">
-                <div class="font-medium text-xxxs text-primary-content/65">
+                <div v-if="player.name === 'nan'" class="font-medium text-xxxs text-primary-content/65">
                   &nbsp
                 </div>
 
-                <div v-if="playerIndex % 2 === 0" class="flex align-center">
+                <div v-if="playerIndex % 2 === 0" class="flex align-center ">
                   <Icon v-if="teamIndex === (teams.length - 1)" name="material-symbols:arrow-downward-rounded"
                     size="14" />
                   <Icon v-else name="material-symbols:arrow-forward-rounded" size="14" />
@@ -219,6 +244,8 @@ function positionColour(pos: string): string {
         flex h-8 shrink-0 content-center items-center justify-between bg-black/30 rounded-t-xl lg:px-24
       " :aria-expanded="isOpen" aria-controls="bottom-menu-content">
 
+      <div>Pick: {{ currentPickNumber }}</div>
+
       <button class="btn btn-xs btn-ghost" onclick="my_modal_1.showModal()">
         <span class="text-sm">Strategy</span>
         <Icon name="material-symbols:help-outline-rounded" size="20" />
@@ -248,14 +275,6 @@ function positionColour(pos: string): string {
             <h1>2. Late QB/TE</h1>
             <h1>3. Balanced</h1>
           </div>
-          <!--           <div class="pt-4 min-w-50">
-              <select class="select" v-model="selectedScoringId">
-              <option disabled value="">Scoring Format</option>
-              <option v-for="sf in scoringFormats" :key="sf.id" :value="sf.id">
-                {{ sf.name }}
-              </option> 
-            </select>
-          </div>-->
           <div class="modal-action">
             <form method="dialog">
               <div class="flex gap-2">
@@ -282,42 +301,6 @@ function positionColour(pos: string): string {
 
       <div class="flex justify-around gap-1">
 
-        <!-- <div>
-          <button @click="isUnlocked = !isUnlocked" :class="isUnlocked ? 'bg-green-200' : 'bg-red-200'"
-            class="btn btn-xs border text-center rounded-2xl px-2 text-sm my-1 flex items-center justify-center gap-2 w-full">
-            <span>Custom</span>
-            <Icon v-if="isUnlocked" name="material-symbols:lock-open-right" size="15" />
-            <Icon v-else name="material-symbols:lock" size="15" />
-            <div class="flex font-light">
-              <span v-if="isUnlocked">Click to lock</span>
-              <span v-else>Click to unlock</span>
-            </div>
-          </button>
-          <ul class="list shadow-md">
-            <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
-              <div class="list-row text-xs py-1 pr-0 rounded-none flex justify-between" :class="zebraStripes(index)">
-                <div>
-                  <div>
-                    {{ index + 1 }}. {{ player.player_name }}
-                  </div>
-                  <div class="text-xxs uppercase font-semibold opacity-60">
-                    <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
-                    {{ player.position }} - {{ player.team }}
-                  </div>
-                </div>
-                <div class="flex items-center justify-center opacity-60 mr-">
-                  <button class="btn btn-xs" :disabled="!isUnlocked">
-                    <Icon name="material-symbols:arrow-downward" size="20" />
-                  </button>
-                  <button class="btn btn-xs" :disabled="!isUnlocked">
-                    <Icon name="material-symbols:arrow-upward" size="20" />
-                  </button>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div> -->
-
         <div>
           <div class="bg-fantasy-pros/60 text-center rounded-2xl px-2 text-sm my-1.5">Fantasy Pros ECR</div>
           <ul class="list shadow-md">
@@ -328,7 +311,7 @@ function positionColour(pos: string): string {
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
                   <div>
-                    {{ index + 1 }}. {{ player.player_name }}
+                    {{ player.rank_ecr }}. {{ player.player_name }}
                   </div>
                   <div class="text-xxs uppercase font-semibold opacity-60">
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.player_position_id)"></div>
@@ -350,7 +333,7 @@ function positionColour(pos: string): string {
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
                   <div>
-                    {{ index + 1 }}. {{ player.player_name }}
+                    {{ player.overall_pick }}. {{ player.player_name }}
                   </div>
                   <div class="text-xxs uppercase font-semibold opacity-60">
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
@@ -362,37 +345,18 @@ function positionColour(pos: string): string {
           </ul>
         </div>
 
-        <!-- <div>
-          <div class="bg-ffpc/30 text-center rounded-2xl px-2 text-sm my-1.5">FFPC $2K ADP</div>
-          <ul class="list shadow-md">
-            <li v-for="(player, index) in availableFfpcPlayers" :key="index">
-              <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
-                <div>
-                  <div>
-                    {{ player.adp.toFixed(0) }}. {{ player.name }}
-                  </div>
-                  <div class="text-xxs uppercase font-semibold opacity-60">
-                    <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
-                    {{ player.position }} - {{ player.nflTeam }}
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div> -->
-
-
         <div>
           <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
-              <div v-if="index === 0 || player.tier !== availableFgPlayers[index - 1]?.tier"
-                class="list-row bg-football-guys/15 px-2 py-0 text-xs leading-tight rounded-none ">Tier {{
-                  player.tier }}</div>
+              <div v-if="index % teams.length === 0"
+                class="list-row bg-football-guys/15 px-2 py-0 text-xs leading-tight rounded-none ">Round {{
+                  index / teams.length + 1 }}</div>
+
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
                   <div>
-                    {{ index + 1 }}. {{ player.player_name }}
+                    {{ player.overall_pick }}. {{ player.player_name }}
                   </div>
                   <div class="text-xxs uppercase font-semibold opacity-60">
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
@@ -406,48 +370,58 @@ function positionColour(pos: string): string {
 
 
         <div>
+          <!-- TODO: have a way to show by players by round -->
           <div class="bg-pink-500/30 text-center rounded-2xl px-2 text-sm my-1.5">ADP + Implied Points
           </div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableVegasPlayers" :key="player.player_id">
-              <div class="list-row grid grid-cols-4 justify-between text-xs py-1.5 rounded-none"
+              <div class="list-row grid grid-cols-6 justify-between text-xs py-1.5 rounded-none"
                 :class="zebraStripes(index)">
-                <div class="col-span-3">
+                <div class="col-span-4">
                   <div>
                     {{ player.rank_ecr }}. {{ player.player_name }}
                   </div>
-                  <div class="text-xxs uppercase font-semibold opacity-60">
+                  <div class="text-xxs uppercase font-semibold opacity-60 flex gap-2">
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.player_position_id)"></div>
                     {{ player.player_position_id }} - {{ player.player_team_id }}
                   </div>
                 </div>
-                <div class="col-span-1 flex text-right items-center font-semibold opacity-80">{{
+                <div class="col-span-2 flex text-right items-center font-semibold opacity-80 gap-2">{{
                   player.VegasPlayer?.FantasyPoints }}
+                  <div v-if="bottomOffence.has(player.player_team_id)" class="badge badge-xs bg-red-200">!</div>
+                  <div v-else-if="topOffence.has(player.player_team_id)" class="badge badge-xs bg-green-200">✓</div>
                 </div>
+              </div>
+              <div v-if="pickSlots.includes(index) && selectedPosition === 'All'"
+                class="bg-pink-300/45 px-1 leading rounded-none text-xxxs font-medium ">Proj.
+                next pick
               </div>
             </li>
           </ul>
         </div>
 
-        <!-- <div>
-      <div class="badge text-md my-2 tracking-wide bg-ff-trade-calc/85 p-2.5 text-white">FF Trade Value</div>
-      <ul class="list bg-base-100 rounded-box shadow-md">
-        <li v-for="(player, index) in availableFantasyCalcPlayers" :key="player.player.sleeperId">
-          <div class="list-row py-2" :class="index % 2 === 0 ? 'bg-slate-200' : 'bg-white-300'">
-            <div>
-              <div>
-                {{ player.player.name }}<span class="opacity-40"> ({{ player.value }})</span>
-              </div>
-              <div class="text-xs uppercase font-semibold opacity-60">
-                <div class="badge badge-xs" :class="positionColour(player.player.position)">{{ player.player.position }}
-                </div>
-                {{ player.player.maybeTeam }}
-              </div>
-            </div>
+        <div>
+          <div class="bg-orange-400/30 text-center rounded-2xl px-2 text-sm my-1.5">Offensive Projections
           </div>
-        </li>
-      </ul>
-    </div> -->
+          <ul class="list shadow-md">
+            <li v-for="(team, index) in nflTeams" :key="team.abbr">
+              <div class="flex justify-around px-2 py-1 text-xs leading-tight rounded-none" :style="`background-color: color-mix(in srgb, ${index / (nflTeams.length - 1) < 0.5
+                ? `color-mix(in srgb, rgb(107, 114, 128) ${Math.min((index / (nflTeams.length - 1)) * 400, 100)}%, rgb(34, 255, 94))`
+                : `color-mix(in srgb, rgb(255, 0, 0) ${Math.min(Math.max(0, (index / (nflTeams.length - 1) - 0.75) * 400), 100)}%, rgb(107, 114, 128))`
+                } 20%, transparent)`">
+                <div>{{ index + 1 }}</div>
+                <div class="flex">
+                  <div class="badge badge-xs text-white/80"
+                    :style="`background: linear-gradient(135deg, ${team.color} 0%, rgba(0,0,0,0.4) 100%)`">{{ team.abbr
+                    }}
+
+                  </div>
+                </div>
+                <div>{{ team.ppg }}</div>
+              </div>
+            </li>
+          </ul>
+        </div>
 
       </div>
     </div>

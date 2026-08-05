@@ -2,7 +2,8 @@ import { parse } from "node-html-parser";
 import playerIdMapJson from "#server/data/fg-sleeper-id-map.json";
 
 type FootballGuysPlayerDTO = {
-  tier: string
+  overall_pick: number;
+  tier: string;
   player_name: string;
   position: string;
   team: string;
@@ -24,15 +25,19 @@ export default defineEventHandler(async () => {
   let currTier: string = "0";
   const players: FootballGuysPlayerDTO[] = [];
 
+  let overallPick = 1;
+
   for (const tr of trs) {
     if (tr.innerText.startsWith("Tier")) {
       currTier = tr.innerText.split(" ")[1] ?? "unknown";
-      console.log("Current Tier is ", tr.innerText.split(" ")[1])
-    } else if (tr.matches('[data-playerid][data-rank][data-playername]')) {
-      const spans = tr.querySelectorAll('[class^="pos-"], [class^="team-abbr"]');
+    } else if (tr.matches("[data-playerid][data-rank][data-playername]")) {
+      const spans = tr.querySelectorAll(
+        '[class^="pos-"], [class^="team-abbr"]',
+      );
       const footballGuysId = tr?.getAttribute("data-playerid") ?? "";
 
       players.push({
+        overall_pick: overallPick++,
         tier: currTier,
         player_name: tr.getAttribute("data-playername") ?? "",
         team: spans[0]?.innerText ?? "",

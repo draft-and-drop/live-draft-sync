@@ -23,8 +23,6 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event);
 
-  console.log('New request: ' + getRequestURL(event));
-
   if (!config.fantasyProsApiKey) {
     throw createError({
       statusCode: 500,
