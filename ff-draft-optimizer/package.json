@@ -15,10 +15,12 @@
     "dk-map": "npm run mapper -- draft_kings_id dk",
     "fg-map": "npm run mapper -- footballguys_id fg",
     "ffpc-map": "npm run mapper -- ffpc_id ffpc",
+    "flock-map": "npm run mapper -- flock_fantasy_id flock",
     "add-ds": "tsx scripts/add-draftsharks-mappings.ts",
     "add-dk": "tsx scripts/add-draftkings-mappings.ts",
     "add-ffpc": "tsx scripts/add-ffpc-mappings.ts",
-    "update-csv": "npm run add-ds && npm run add-dk && npm run add-ffpc"
+    "add-flock": "tsx scripts/add-flockfantasy-mappings.ts",
+    "update-csv": "npm run add-ds && npm run add-dk && npm run add-ffpc && npm run add-flock"
   },
   "dependencies": {
     "@nuxt/icon": "^2.3.1",

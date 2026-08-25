@@ -1,3 +1,5 @@
+import playerIdMapJson from "#server/data/fp-sleeper-id-map.json";
+
 export type AnalystRanks = Record<string, number>;
 export type AnalystTimestamps = Record<string, string>;
 
@@ -13,6 +15,7 @@ export interface FlockRankingsResponse {
 }
 
 export interface FlockPlayerRanking {
+  sleeper_id: string;
   playerId: number;
   underdogId: string | null;
   playerName: string;
@@ -64,17 +67,23 @@ export interface FlockPlayerRanking {
 
   byeWeek: number | null;
 
-  injury: { concernLevel: string, expectedReturn: string, doctorNotes: string } | null;
+  injury: {
+    concernLevel: string;
+    expectedReturn: string;
+    doctorNotes: string;
+  } | null;
 
   rankDelta: number;
   initialRank: number;
   finalRank: number;
 }
 
+const playerIdMap = playerIdMapJson as Record<string, string>;
+
 export default defineEventHandler(
-  async (event): Promise<FlockRankingsResponse> => {
+  async (event): Promise<FlockPlayerRanking[]> => {
     try {
-      return await $fetch<FlockRankingsResponse>("/rankings", {
+      const res = await $fetch<FlockRankingsResponse>("/rankings", {
         baseURL: "https://api.flockfantasy.com",
 
         query: {
@@ -90,6 +99,12 @@ export default defineEventHandler(
         timeout: 5_000,
         retry: 1,
       });
+
+      return res.data.map((player) => ({
+        ...player,
+        sleeper_id: playerIdMap[player.playerId] ?? "",
+      }));
+
     } catch (error) {
       console.error("Failed to fetch Flock rankings:", error);
 

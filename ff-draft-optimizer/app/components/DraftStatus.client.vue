@@ -61,8 +61,8 @@ let availableAdpPlayers = computed(() => {
 });
 
 let availableFlockPlayers = computed(() => {
-  return flockRankings.value?.data.filter(player => !draftedIds.value.has(player.playerId.toString()) && (selectedPosition.value === "All" || player.position === selectedPosition.value)) ?? [];
-})
+  return flockRankings.value?.filter(player => !draftedIds.value.has(player.sleeper_id) && (selectedPosition.value === "All" || player.position === selectedPosition.value)) ?? [];
+});
 
 let availableVegasPlayers = computed(() => {
   return availableAdpPlayers.value?.map(player => {
@@ -128,7 +128,7 @@ function positionColour(pos: string): string {
 }
 
 function injuryColour(level: string): string {
-    switch (true) {
+  switch (true) {
     case level === "low":
       return "bg-green-300";
     case level === "mild":
@@ -447,7 +447,7 @@ function teamColour(rank: number): string {
           </ul>
         </div>
 
-                <div>
+        <div>
           <div class="bg-orange-300 text-center rounded-2xl px-2 text-sm my-1.5">Flock Fantasy
           </div>
           <ul class="list shadow-md">
@@ -459,7 +459,8 @@ function teamColour(rank: number): string {
                   </div>
                   <div class="text-xxs uppercase font-semibold opacity-60 flex gap-2">
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
-                    {{ player.position }} - {{ player.team }} <div v-if="player.injury" class="tooltip tooltip-accent rounded-2xl px-1" :class="injuryColour(player.injury.concernLevel)"
+                    {{ player.position }} - {{ player.team }} <div v-if="player.injury"
+                      class="tooltip tooltip-accent rounded-2xl px-1" :class="injuryColour(player.injury.concernLevel)"
                       :data-tip="player.injury.expectedReturn + player.injury.doctorNotes">
                       <button>{{ player.injury?.concernLevel }}</button>
                     </div>
