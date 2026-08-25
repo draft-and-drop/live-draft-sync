@@ -102,7 +102,7 @@ export default defineEventHandler(
 
       return res.data.map((player) => ({
         ...player,
-        sleeper_id: playerIdMap[player.playerId] ?? "",
+        sleeper_id: playerIdMap[player.playerId.toString()] ?? "",
       }));
 
     } catch (error) {

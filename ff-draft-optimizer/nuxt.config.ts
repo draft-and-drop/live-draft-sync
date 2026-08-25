@@ -15,11 +15,11 @@ export default defineNuxtConfig({
     typeCheck: true,
     strict: true,
   },
-  routeRules: {
-    "/api/**": {
-      swr: 60 * 5, // cache API responses on server for 5 minutes
-    },
-  },
+  // routeRules: {
+  //   "/api/**": {
+  //     swr: 60 * 5, // cache API responses on server for 5 minutes
+  //   },
+  // },
   modules: ["@nuxt/icon"],
   icon: {
     serverBundle: {

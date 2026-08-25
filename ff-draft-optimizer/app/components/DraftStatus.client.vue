@@ -74,9 +74,9 @@ let availableVegasPlayers = computed(() => {
 
 let currentPickNumber = computed(() => {
   const index = draftedPlayers.value.findIndex(pick => pick.name === "nan" || pick.name === "NEXT_PICK");
-  
+
   // If no empty slot is found (e.g. data is loading), default to Pick 1 
-  return index === -1 ? 1 : index + 1; 
+  return index === -1 ? 1 : index + 1;
 });
 
 let totalRounds = computed(() => teams.value.at(0)?.players.length ?? 0);
@@ -354,6 +354,10 @@ function teamColour(rank: number): string {
                   </div>
                 </div>
               </div>
+              <div v-if="pickSlots.includes(index) && selectedPosition === 'All'"
+                class="bg-fantasy-pros/10 px-1 leading rounded-none text-xxxs font-medium ">Proj.
+                next pick
+              </div>
             </li>
           </ul>
         </div>
@@ -363,7 +367,7 @@ function teamColour(rank: number): string {
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableDsPlayers" :key="player.ds_id">
               <div v-if="index === 0 || player.overallTier !== availableDsPlayers[index - 1]?.overallTier"
-                class="list-row bg-draft-sharks/15 px-2 py-0 text-xs leading-tight rounded-none ">Tier {{
+                class="list-row bg-draft-sharks/35 px-2 py-0 text-xs leading-tight rounded-none ">Tier {{
                   player.overallTier }}</div>
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
@@ -376,17 +380,18 @@ function teamColour(rank: number): string {
                   </div>
                 </div>
               </div>
+              <div v-if="pickSlots.includes(index) && selectedPosition === 'All'"
+                class="bg-draft-sharks/15 px-1 leading rounded-none text-xxxs font-medium ">Proj.
+                next pick
+              </div>
             </li>
           </ul>
         </div>
 
-        <div>
+        <!-- <div>
           <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
-              <!-- <div v-if="index % teams.length === 0"
-                class="list-row bg-football-guys/15 px-2 py-0 text-xs leading-tight rounded-none ">Round {{
-                  index / teams.length + 1 }}</div> -->
 
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
@@ -399,9 +404,13 @@ function teamColour(rank: number): string {
                   </div>
                 </div>
               </div>
+              <div v-if="pickSlots.includes(index) && selectedPosition === 'All'"
+                class="bg-football-guys/30 px-1 leading rounded-none text-xxxs font-medium ">Proj.
+                next pick
+              </div>
             </li>
           </ul>
-        </div>
+        </div> -->
 
         <!-- <div>
           <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
@@ -462,7 +471,7 @@ function teamColour(rank: number): string {
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
                   <div>
-                    {{ player.averageRank }}. {{ player.playerName }}
+                    {{ player.averageRank }}. {{ player.playerName }} ({{ player.playerId }})
                   </div>
                   <div class="text-xxs uppercase font-semibold opacity-60 flex gap-2">
                     <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
