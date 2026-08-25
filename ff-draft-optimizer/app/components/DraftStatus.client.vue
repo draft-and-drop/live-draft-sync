@@ -27,6 +27,7 @@ const { data: fpRankings } = useFetch("/api/fantasypros", { query: { format: fpF
 const { data: dsRankings } = useFetch("/api/draftsharks", { query: { format: dsFormat } });
 const { data: adpRankings } = useFetch("/api/adp", { query: { format: fpFormat } });
 const { data: fgRankings } = useFetch("/api/footballguys");
+const { data: flockRankings, pending: flockPending, error: flockError } = await useFetch('/api/flock')
 const { data: vegasData, pending: vegasLoading, error: vegasError } = useVegasData();
 
 const vegasPlayers = computed(() => vegasData.value?.vegasPlayers ?? []);
@@ -58,6 +59,10 @@ let availableFgPlayers = computed(() => {
 let availableAdpPlayers = computed(() => {
   return adpRankings.value?.filter(player => isAvailable(player) && (selectedPosition.value === "All" || player.player_position_id === selectedPosition.value)) ?? [];
 });
+
+let availableFlockPlayers = computed(() => {
+  return flockRankings.value?.data.filter(player => !draftedIds.value.has(player.playerId.toString()) && (selectedPosition.value === "All" || player.position === selectedPosition.value)) ?? [];
+})
 
 let availableVegasPlayers = computed(() => {
   return availableAdpPlayers.value?.map(player => {
@@ -122,6 +127,19 @@ function positionColour(pos: string): string {
   }
 }
 
+function injuryColour(level: string): string {
+    switch (true) {
+    case level === "low":
+      return "bg-green-300";
+    case level === "mild":
+      return "bg-yellow-300";
+    case level === "medium":
+      return "bg-orange-300";
+    default:
+      return "bg-red-300"
+  }
+}
+
 function teamColour(rank: number): string {
   switch (true) {
     case rank < 5:
@@ -139,14 +157,24 @@ function teamColour(rank: number): string {
   <!-- Underlay scroll container with dynamic height -->
   <div class="overflow-auto transition-all duration-300 ease-in-out"
     :class="isOpen ? 'h-[45vh]' : 'h-[calc(100vh-3.5rem)]'">
-    <div class="flex justify-center gap-0.5 p-4">
-      <div v-for="(team, teamIndex) in teams" class="gap-0.5 flex flex-col">
+    <div class="flex w-full gap-0.5 px-[clamp(0px,(100vw-1200px)/10,6rem)] py-2">
+      <div v-for="(team, teamIndex) in teams" class="gap-0.5 flex flex-col flex-1 min-w-30">
         <div class="text-center font-semibold">
-          <div class="text-md m-1 truncate w-28 cursor-pointer"
-            :class="teamIndex + 1 === pickSlot ? 'bg-green-700 border-red rounded-box text-white' : ''"
-            @click="pickSlot = teamIndex + 1">{{ teamIndex + 1 === pickSlot ? 'My Team' : team.team_name }}</div>
+          <div class="group m-1 w-auto truncate rounded-box text-center font-semibold" :class="teamIndex + 1 === pickSlot
+            ? 'bg-green-700 text-white'
+            : 'cursor-pointer hover:bg-green-700/20'" @click="pickSlot = teamIndex + 1">
+            <span v-if="teamIndex + 1 === pickSlot">
+              My Team
+            </span>
+
+            <template v-else>
+              <span class="group-hover:hidden">{{ team.team_name }}</span>
+              <span class="hidden group-hover:inline text-white/70">Select</span>
+            </template>
+          </div>
+
         </div>
-        <div v-for="(player, playerIndex) in team.players" class="w-30 h-12 rounded-box overflow-hidden">
+        <div v-for="(player, playerIndex) in team.players" class="w-full min-w-30 h-12 rounded-box overflow-hidden">
 
           <!-- Design for when no player was drafted here yet or this is the next pick -->
           <div v-if="player.name === 'nan' || player.name === 'NEXT_PICK'"
@@ -349,9 +377,9 @@ function teamColour(rank: number): string {
           <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
           <ul class="list shadow-md">
             <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
-              <div v-if="index % teams.length === 0"
+              <!-- <div v-if="index % teams.length === 0"
                 class="list-row bg-football-guys/15 px-2 py-0 text-xs leading-tight rounded-none ">Round {{
-                  index / teams.length + 1 }}</div>
+                  index / teams.length + 1 }}</div> -->
 
               <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
                 <div>
@@ -368,9 +396,28 @@ function teamColour(rank: number): string {
           </ul>
         </div>
 
+        <!-- <div>
+          <div class="bg-football-guys/30 text-center rounded-2xl px-2 text-sm my-1.5">Football Guys (12 PPR)</div>
+          <ul class="list shadow-md">
+            <li v-for="(player, index) in availableFgPlayers" :key="player.football_guys_id">
+              <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
+                <div>
+                  <div>
+                    {{ player.overall_pick }}. {{ player.player_name }}
+                  </div>
+                  <div class="text-xxs uppercase font-semibold opacity-60">
+                    <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
+                    {{ player.position }} - {{ player.team }}
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div> -->
+
+
 
         <div>
-          <!-- TODO: have a way to show by players by round -->
           <div class="bg-pink-500/30 text-center rounded-2xl px-2 text-sm my-1.5">ADP + Implied Points
           </div>
           <ul class="list shadow-md">
@@ -394,6 +441,34 @@ function teamColour(rank: number): string {
               </div>
               <div v-if="pickSlots.includes(index) && selectedPosition === 'All'"
                 class="bg-pink-300/45 px-1 leading rounded-none text-xxxs font-medium ">Proj.
+                next pick
+              </div>
+            </li>
+          </ul>
+        </div>
+
+                <div>
+          <div class="bg-orange-300 text-center rounded-2xl px-2 text-sm my-1.5">Flock Fantasy
+          </div>
+          <ul class="list shadow-md">
+            <li v-for="(player, index) in availableFlockPlayers" :key="player.playerId">
+              <div class="list-row text-xs py-1.5 rounded-none" :class="zebraStripes(index)">
+                <div>
+                  <div>
+                    {{ player.averageRank }}. {{ player.playerName }}
+                  </div>
+                  <div class="text-xxs uppercase font-semibold opacity-60 flex gap-2">
+                    <div class="badge [--size:0.60rem]" :class="positionColour(player.position)"></div>
+                    {{ player.position }} - {{ player.team }} <div v-if="player.injury" class="tooltip tooltip-accent rounded-2xl px-1" :class="injuryColour(player.injury.concernLevel)"
+                      :data-tip="player.injury.expectedReturn + player.injury.doctorNotes">
+                      <button>{{ player.injury?.concernLevel }}</button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+              <div v-if="pickSlots.includes(index) && selectedPosition === 'All'"
+                class="bg-orange-300  px-1 leading rounded-none text-xxxs font-medium ">Proj.
                 next pick
               </div>
             </li>
@@ -424,6 +499,7 @@ function teamColour(rank: number): string {
         </div>
 
       </div>
+
     </div>
   </section>
 </template>

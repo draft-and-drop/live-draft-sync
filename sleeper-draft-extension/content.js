@@ -29,10 +29,10 @@ function parsePlayerCell(cell) {
 function parseTeamColumn(teamCell) {
   console.assert(teamCell instanceof HTMLElement);
 
-  const teamNameElement = teamCell.querySelector(
-    ".team-header-container .header-text",
-  );
-  console.assert(teamNameElement instanceof HTMLElement);
+  const teamHeaderContainer = teamCell.querySelector(".team-header-container");
+  console.assert(teamHeaderContainer instanceof HTMLElement);
+  const teamName =
+    teamHeaderContainer.querySelector(".header-text")?.innerText ?? "Unknown";
 
   // collect the drafted players
   const playerObjs = [];
@@ -71,7 +71,7 @@ function parseTeamColumn(teamCell) {
   }
 
   return {
-    team_name: teamNameElement.textContent,
+    team_name: teamName,
     players: playerObjs,
   };
 }
