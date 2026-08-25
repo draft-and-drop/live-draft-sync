@@ -1,4 +1,4 @@
-import playerIdMapJson from "#server/data/fp-sleeper-id-map.json";
+import playerIdMapJson from "#server/data/flock-sleeper-id-map.json";
 
 export type AnalystRanks = Record<string, number>;
 export type AnalystTimestamps = Record<string, string>;

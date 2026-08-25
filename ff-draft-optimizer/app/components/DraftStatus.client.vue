@@ -72,7 +72,12 @@ let availableVegasPlayers = computed(() => {
 })
 
 
-let currentPickNumber = computed(() => draftedPlayers.value.findIndex(pick => pick.name === "nan") + 1);
+let currentPickNumber = computed(() => {
+  const index = draftedPlayers.value.findIndex(pick => pick.name === "nan" || pick.name === "NEXT_PICK");
+  
+  // If no empty slot is found (e.g. data is loading), default to Pick 1 
+  return index === -1 ? 1 : index + 1; 
+});
 
 let totalRounds = computed(() => teams.value.at(0)?.players.length ?? 0);
 
@@ -88,7 +93,7 @@ let pickSlots = computed(() => {
     }
   }
 
-  return pickValues.map(n => n -= currentPickNumber.value).filter(n => n >= 0);
+  return pickValues.map(n => n - currentPickNumber.value).filter(n => n >= 0);
 });
 
 function zebraStripes(index: number): string {
@@ -273,6 +278,8 @@ function teamColour(rank: number): string {
       " :aria-expanded="isOpen" aria-controls="bottom-menu-content">
 
       <div>Pick: {{ currentPickNumber }}</div>
+
+      <div>{{ pickSlot }}</div>
 
       <button class="btn btn-xs btn-ghost" onclick="my_modal_1.showModal()">
         <span class="text-sm">Strategy</span>

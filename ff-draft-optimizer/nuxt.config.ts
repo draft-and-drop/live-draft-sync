@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   },
   routeRules: {
     "/api/**": {
-      swr: 60 * 15, // cache API responses on server for 15 minutes
+      swr: 60 * 5, // cache API responses on server for 5 minutes
     },
   },
   modules: ["@nuxt/icon"],
