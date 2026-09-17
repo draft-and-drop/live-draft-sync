@@ -74,8 +74,6 @@ export default defineEventHandler(async (event) => {
       ),
     );
 
-  console.log(teamMapping["12"]);
-
   let overallPick = 1;
   const players: DraftSharksPlayerDTO[] = elements.map((element) => {
     const draft_sharks_id = element.getAttribute("data-key") ?? "";
